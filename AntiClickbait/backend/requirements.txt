@@ -1,0 +1,9 @@
+flask
+flask-cors
+requests
+cerebras_cloud_sdk
+scikit-learn
+joblib
+pandas
+numpy
+scipy
