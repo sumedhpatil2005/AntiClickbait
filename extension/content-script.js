@@ -69,6 +69,9 @@ async function checkClickbait() {
       return;
     }
 
+    // Prevent duplicate badges
+    if (document.querySelector(".clickbait-badge")) return;
+
     const videoTitle = ytTitleNode.innerText;
 
     const res = await fetch("http://127.0.0.1:5000/predict", {
@@ -87,14 +90,45 @@ async function checkClickbait() {
     console.log("Clickbait API Result:", data);
 
     const badge = document.createElement("div");
-    badge.style.background = "#222";
-    badge.style.color = "#fff";
-    badge.style.padding = "8px";
-    badge.style.marginTop = "8px";
-    badge.style.borderRadius = "6px";
-    badge.style.fontSize = "14px";
+    badge.className = "clickbait-badge";
 
-    badge.textContent = `Clickbait Check: ${data.prediction} (Confidence: ${data.confidence.toFixed(2)})`;
+    // 🎨 Dynamic color
+    const bgColor = data.prediction === "Misleading" ? "#e74c3c" : "#2ecc71";
+
+    badge.style.background = bgColor;
+    badge.style.color = "#fff";
+    badge.style.padding = "10px";
+    badge.style.marginTop = "8px";
+    badge.style.borderRadius = "8px";
+    badge.style.fontSize = "14px";
+    badge.style.fontWeight = "bold";
+    badge.style.fontFamily = "Arial, sans-serif";
+    badge.style.boxShadow = "0 2px 6px rgba(0,0,0,0.2)";
+    badge.style.transition = "0.3s ease";
+
+    badge.textContent =
+      `Clickbait Check: ${data.prediction} (Confidence: ${(data.confidence * 100).toFixed(1)}%)`;
+
+    // 📊 Confidence bar
+    const barContainer = document.createElement("div");
+    barContainer.style.background = "rgba(255,255,255,0.3)";
+    barContainer.style.height = "6px";
+    barContainer.style.borderRadius = "3px";
+    barContainer.style.marginTop = "6px";
+
+    const bar = document.createElement("div");
+    bar.style.height = "6px";
+    bar.style.width = `${data.confidence * 100}%`;
+    bar.style.background = "#fff"; 
+    bar.style.borderRadius = "3px";
+    bar.style.transition = "width 0.5s ease";
+
+    barContainer.appendChild(bar);
+    badge.appendChild(barContainer);
+
+    // 💡 Tooltip
+    badge.title =
+      "Prediction based on title patterns, emotional triggers, and clickbait signals.";
 
     ytTitleNode.parentNode.appendChild(badge);
 
@@ -102,5 +136,6 @@ async function checkClickbait() {
     console.error("API Error:", err);
   }
 }
+
 
 setTimeout(checkClickbait, 4000);
