@@ -1,57 +1,108 @@
-# AntiClickbait (2026 Edition) 🛡️
+# 🎥 Clickbait Clarifier 🚀
 
-A powerful AI-powered browser extension that detects misleading YouTube clickbait handling real-world complexity (Piracy, Fake News, Duration Scams) using a **Hybrid Ensemble Architecture**.
+**Stop wasting time on misleading videos.** Clickbait Clarifier uses a hybrid AI approach—combining **LightGBM Statistical Learning** with **Llama 3 Semantic Analysis**—to detect and flag deceptive YouTube content in real-time.
 
-![System Workflow](architecture_diagram.html)
+---
 
-## 🚀 Key Features
+## ✨ Key Features
+- **Hybrid Detection Engine:** Uses a LightGBM model trained on 55+ statistical features (engagement ratios, title-to-description consistency, etc.).
+- **LLM Verification:** Deep semantic analysis via Llama 3 (Cerebras Cloud) to verify titles against transcripts.
+- **Transcript Verification:** Fetches and analyzes video transcripts to find "Key Moments" where promises are fulfilled.
+- **Real-Time Extension:** A sleek Chrome extension that adds status badges directly to your YouTube interface.
+- **Smart Key Rotation:** Automatic rotation of Transcripts API keys to handle rate limits and quotas.
 
-*   **Hybrid Intelligence**: Combines **LightGBM** (Statistical Model) for speed with **Llama 3** (LLM) for semantic reasoning.
-*   **Deep Verification**: Fetches video transcripts to verify if the content actually matches the title.
-*   **Piracy/Scam Shield**: Detects "Full Movie" fakes, unofficial cracks, and scams using strict channel verification.
-*   **Real-time Logic**:
-    *   **The "Glance"**: Instantly flags CAPS, emojis, and spammy stats.
-    *   **The "Watch"**: Reads the video for you to find the "Key Moment".
-    *   **The "Veto"**: Prevents false positives by verifying trusted channels.
+---
 
-## 🛠️ Installation
+## 🏗️ System Architecture
+
+### 1. High-Level Overview
+The system bridges a Chrome content script with a modular Flask backend powered by high-performance AI models.
+
+```mermaid
+graph TD
+    subgraph Client [Chrome Extension]
+        UI[YouTube UI Overlay]
+        CS[Content Script]
+    end
+
+    subgraph Server [Backend API]
+        API[Flask Gateway]
+        ML[LightGBM Engine]
+        LLM[Llama 3 Brain]
+        TR[Transcript Service]
+    end
+
+    UI --> CS
+    CS -->|POST /predict| API
+    API --> ML
+    API --> LLM
+    TR -->|Context| LLM
+    API -->|Verdict| CS
+```
+
+### 2. Request Flow (Sequence)
+```mermaid
+sequenceDiagram
+    participant Ext as Chrome Extension
+    participant API as Flask Backend
+    participant ML as LightGBM
+    participant LLM as Llama 3
+    
+    Ext->>API: POST /predict (video_id)
+    par Parallel Analysis
+        API->>ML: Statistical Probability
+        API->>LLM: Metadata/Transcript Check
+    end
+    API->>API: Hybrid Ensemble Brain
+    API-->>Ext: Verdict & Confidence
+```
+
+---
+
+## 🚀 Getting Started
 
 ### 1. Backend Setup (Flask API)
-The brains of the operation.
 
-```bash
-cd backend
-pip install -r requirements.txt
-```
+1.  **Clone the Repository:**
+    ```bash
+    git clone https://github.com/sumedhpatil2005/AntiClickbait.git
+    cd AntiClickbait/backend
+    ```
 
-**Configuration:**
-1.  Duplicate `backend/api_config.example.py` and rename it to `backend/api_config.py`.
-2.  Add your API keys (YouTube Data API, Cerebras/Llama, TranscriptAPI).
+2.  **Install Dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-**Run:**
-```bash
-python app.py
-```
+3.  **Configure API Keys:**
+    - Duplicate `api_config.example.py` to `api_config.py`.
+    - Add your **YouTube Data API**, **Cerebras**, and **TranscriptAPI.com** keys.
 
-### 2. Extension Setup (Chrome/Brave)
-The eyes of the operation.
+4.  **Run the Server:**
+    ```bash
+    python app.py
+    ```
 
-1.  Open Chrome and go to `chrome://extensions`.
-2.  Enable **Developer Mode** (top right).
-3.  Click **Load Unpacked**.
-4.  Select the `extension` folder from this repository.
-5.  Pin the extension and browse YouTube!
+### 2. Extension Setup (Chrome)
 
-## 🧠 Architecture
+1.  Open **chrome://extensions/** in your browser.
+2.  Enable **"Developer mode"** (top right).
+3.  Click **"Load unpacked"** and select the `/extension` folder from this project.
+4.  Open any YouTube video and look for the detection badge below the title!
 
-See `architecture_diagram.html` (view in browser) or `project_workflow.md` for a detailed breakdown of the decision logic.
+---
 
-## 📂 Project Structure
+## 🛠️ Tech Stack
+- **Frontend:** JavaScript (Chrome Extension API), CSS3 (Glassmorphism UI).
+- **Backend:** Flask (Python), LightGBM, Pandas, Scikit-Learn.
+- **AI Models:** Llama-3 (via Cerebras Cloud), LightGBM (Custom Trained).
+- **APIs:** YouTube Data API v3, TranscriptAPI.com.
 
-*   `backend/` - Flask Server + ML Models + Logic
-*   `extension/` - Javascript Chrome Extension
-*   `notebooks/` - Research & Dataset generation
-*   `BEST_FINAL_MODEL/` - Pre-trained LightGBM artifacts
+---
 
-## 📜 License
-MIT
+## 📜 Acknowledgments
+- **Cerebras Cloud** for the blazing-fast Llama 3 inference.
+- **TranscriptAPI** for the robust YouTube subtitle retrieval.
+
+---
+*Created with ❤️ for a safer, cleaner YouTube experience.*
