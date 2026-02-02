@@ -3,6 +3,7 @@ console.log("Anti-Clickbait Extension loaded!");
 // Flag to prevent duplicate badges
 let badgeAdded = false;
 let lastUrl = location.href;
+let inFlightVideoId = null; // Prevent simultaneous requests for same ID
 
 /**
  * Extract video ID from YouTube URL
@@ -72,6 +73,13 @@ async function checkClickbait() {
     return false;
   }
 
+  // 2b. Prevent simultaneous requests for the same video
+  if (inFlightVideoId === videoId) {
+    console.log(`Request already in flight for ${videoId}, skipping...`);
+    return false;
+  }
+  inFlightVideoId = videoId;
+
   // 3. Find Title Element (Placement Target)
   const titleResult = getYouTubeTitle();
   if (!titleResult) {
@@ -80,6 +88,7 @@ async function checkClickbait() {
   }
 
   try {
+    const startUrl = location.href; // Capture URL at start
     console.log(`Checking clickbait for ${videoId}...`);
 
     // 4. Call API
@@ -89,6 +98,13 @@ async function checkClickbait() {
       body: JSON.stringify({ video_id: videoId })
     });
 
+    // RACE CONDITION FIX: If URL changed while fetching, abort.
+    if (location.href !== startUrl) {
+      console.log("URL changed during fetch, discarding old result.");
+      inFlightVideoId = null; // Release lock
+      return false;
+    }
+
     const data = await res.json();
     if (data.error) throw new Error(data.error);
 
@@ -97,24 +113,35 @@ async function checkClickbait() {
     badge.className = "clickbait-badge";
 
     // Styling based on prediction
+    // Styling based on prediction
     const isMisleading = data.prediction === "Misleading";
     badge.style.background = isMisleading ? "#dc2626" : "#16a34a"; // Red or Green
     badge.style.color = "#fff";
-    badge.style.padding = "8px 12px";
-    badge.style.marginTop = "10px";
-    badge.style.borderRadius = "6px";
+    badge.style.padding = "6px 10px";
+    badge.style.marginTop = "12px"; // Gap between title and badge
+    badge.style.borderRadius = "4px";
     badge.style.fontSize = "14px";
-    badge.style.fontWeight = "600";
-    badge.style.display = "inline-flex";
+    badge.style.fontFamily = "Roboto, Arial, sans-serif";
+    badge.style.fontWeight = "500";
+    badge.style.display = "inline-flex"; // Keeps icon and text together
     badge.style.alignItems = "center";
-    badge.style.gap = "8px";
-    badge.style.boxShadow = "0 2px 4px rgba(0,0,0,0.2)";
+    badge.style.gap = "6px";
+    badge.style.width = "fit-content"; // Don't stretch
     badge.style.cursor = "default";
+    badge.style.zIndex = "999";
 
     // Text Content
     const icon = isMisleading ? "⚠️" : "✅";
     const conf = (data.confidence * 100).toFixed(1);
-    badge.textContent = `${icon} ${data.prediction} (${conf}%)`;
+
+    let text = `${icon} ${data.prediction} (${conf}%)`;
+
+    // Add Timestamp if verified
+    if (data.verification_timestamp && !isMisleading) {
+      text += ` • 🎯 Key Moment at ${data.verification_timestamp}`;
+    }
+
+    badge.textContent = text;
 
     if (data.reason) {
       badge.title = `Reason: ${data.reason}`;
@@ -122,16 +149,31 @@ async function checkClickbait() {
 
     // 6. Append Badge
     const { element: ytTitleNode } = titleResult;
-    // Try to append after the h1 or inside the metadata container
-    const parent = ytTitleNode.closest('h1') || ytTitleNode.parentNode;
-    parent.appendChild(badge);
+    // We want to insert it AFTER the h1 element/title container
+    // content-style.css can also help here, but inline styles ensure immediate fix
+    const titleContainer = ytTitleNode.closest('ytd-watch-metadata') || ytTitleNode.parentNode;
+
+    // Check if we should insert after the H1 specifically
+    const h1Element = titleContainer.querySelector('h1') || ytTitleNode;
+
+    // FINAL CHECK: Ensure no badge was added while we were waiting/processing
+    if (titleContainer.querySelector('.clickbait-badge') || document.querySelector(`.clickbait-badge[data-video-id="${videoId}"]`)) {
+      console.log("Badge added by another process, skipping append.");
+      return true;
+    }
+    badge.setAttribute('data-video-id', videoId); // Mark badge with ID
+
+    // Insert AFTER the title (h1)
+    h1Element.insertAdjacentElement('afterend', badge);
 
     badgeAdded = true;
     console.log("Badge added!");
+    inFlightVideoId = null; // Release lock
     return true;
 
   } catch (err) {
     console.error("API Error:", err);
+    inFlightVideoId = null; // Release lock
     return false;
   }
 }
