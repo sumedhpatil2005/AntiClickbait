@@ -34,7 +34,7 @@ Return JSON only:
     "confidence": 0.0 to 1.0,
     "reason": "Detailed explanation.",
     "flags": ["list", "of", "flags"],
-    "verification_timestamp": "MM:SS" (e.g., "02:15", NOT "135s")
+    "verification_timestamp": "MM:SS" (e.g., "02:15". ONLY provide if found in the TRANSCRIPT SNIPPET. If unsure or not found, return null.)
 }
 """
 

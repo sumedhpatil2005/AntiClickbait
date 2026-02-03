@@ -122,7 +122,7 @@ def predict():
         
         if verification_timestamp and not has_flags:
             final_prob = 0.1 # Trustworthy if promise found AND no red flags
-            formatted_ts = clean_timestamp(verification_timestamp)
+            formatted_ts = clean_timestamp(verification_timestamp, duration_min=video_data.get('duration_min'))
             reason = f"Verified: {llm_metadata.get('reason')}"
             llm_metadata['verification_timestamp'] = formatted_ts
             verification_timestamp = formatted_ts 

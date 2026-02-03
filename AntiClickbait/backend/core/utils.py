@@ -24,46 +24,60 @@ def parse_duration(duration_str):
     if 'S' in duration_str: seconds = int(duration_str.replace('S', ''))
     return hours * 60 + minutes + seconds / 60
 
-def clean_timestamp(ts):
-    """Converts raw seconds/strings (e.g., '29.5s', '120', '31:679') to MM:SS format."""
+def clean_timestamp(ts, duration_min=None):
+    """Converts raw seconds/strings to MM:SS format and validates against video duration."""
     if not ts: return None
     try:
         # Normalize input
         ts_str = str(ts).lower().replace('s', '').strip()
         
-        # Filter out "not applicable", "none", "n/a", "not found"
+        # Filter out junk
         if ts_str in ["not applicable", "none", "n/a", "null", "unknown", "not found"]:
             return None
 
-        # Handle "MM:SS" or "MM:SS:ms" or typos like "31:679"
+        total_seconds = 0
+        
+        # Case 1: HH:MM:SS or MM:SS
         if ":" in ts_str:
             parts = ts_str.split(":")
-            # Standard MM:SS
             if len(parts) == 2:
-                m = float(parts[0])
-                s_part = float(parts[1])
-                
-                # If seconds > 59, it likely matches a typo like "31:679" which meant 31.679s but got colon-ed
-                if s_part >= 60: 
-                    # Treat colon as decimal
+                # MM:SS
+                m, s = float(parts[0]), float(parts[1])
+                # Fix typos like 31:679 -> 31.679
+                if s >= 60:
                     total_seconds = float(ts_str.replace(":", "."))
-                    m = int(total_seconds // 60)
-                    s = int(total_seconds % 60)
-                    return f"{m:02}:{s:02}"
-                
-                # Valid MM:SS
-                return f"{int(m):02}:{int(s_part):02}"
-                
-            return ts_str # Return HH:MM:SS as is
+                else:
+                    total_seconds = m * 60 + s
+            elif len(parts) == 3:
+                # HH:MM:SS
+                h, m, s = float(parts[0]), float(parts[1]), float(parts[2])
+                total_seconds = h * 3600 + m * 60 + s
+            else:
+                return ts_str # Unknown format
+        else:
+            # Case 2: Pure numbers (seconds)
+            total_seconds = float(ts_str)
+
+        # Validation against duration
+        if duration_min:
+            max_seconds = duration_min * 60
+            # If timestamp is impossible, ignore it
+            if total_seconds > max_seconds:
+                return None
+            # If timestamp is near zero but not quite, it might be a hallucination (e.g. 1s)
+            # but usually we trust short ones.
         
-        # Handle pure numbers (90 -> 01:30)
-        seconds = float(ts_str)
-        m = int(seconds // 60)
-        s = int(seconds % 60)
-        return f"{m:02}:{s:02}"
+        # Format back to MM:SS or HH:MM:SS
+        m_total = int(total_seconds // 60)
+        final_s = int(total_seconds % 60)
+        if m_total >= 60:
+            h = m_total // 60
+            m = m_total % 60
+            return f"{h:02}:{m:02}:{final_s:02}"
+        return f"{m_total:02}:{final_s:02}"
         
     except:
-        return ts # Return original if parsing fails
+        return ts
 
 # ============================================================
 # SENTIMENT HELPERS
