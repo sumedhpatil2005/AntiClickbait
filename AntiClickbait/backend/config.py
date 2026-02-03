@@ -1,7 +1,11 @@
 import os
+from dotenv import load_dotenv
+
+
 
 # Try to import confidential keys (Development)
 try:
+    load_dotenv()
     from api_config import YOUTUBE_API_KEY, CEREBRAS_API_KEY, TRANSCRIPT_API_KEYS
 except ImportError:
     # Fallback to Environment Variables (Production)

@@ -1,4 +1,4 @@
-console.log("Anti-Clickbait Extension loaded!");
+console.log("Clickbait Clarifier Extension loaded!");
 
 // Flag to prevent duplicate badges
 let badgeAdded = false;
@@ -133,10 +133,12 @@ async function checkClickbait() {
     badge.style.zIndex = "999";
 
     // Text Content
-    const icon = isMisleading ? "⚠️" : "✅";
-    const conf = (data.confidence * 100).toFixed(1);
+    const icon = "⚠️";
+    const conf = (data.confidence * 100).toFixed(0);
 
-    let text = `${icon} ${data.prediction} (${conf}%)`;
+    let text = isMisleading
+      ? `${icon} Misleading (${conf}%)`
+      : `Authenticity Score: ${conf}%`;
 
     // Add Timestamp if verified
     if (data.verification_timestamp && !isMisleading) {
