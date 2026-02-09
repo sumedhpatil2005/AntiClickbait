@@ -21,10 +21,17 @@ jobs:
           
           # 2. Setup a fresh git environment to push just this folder
           git init
+          git lfs install
           git config user.name "Hugging Face Deploy"
           git config user.email "deploy@huggingface.co"
+          
+          # 3. Track large binary files with Git LFS
+          git lfs track "*.joblib"
+          git add .gitattributes
+          
+          # 4. Add all files
           git add .
           git commit -m "Deploying backend from subfolder"
           
-          # 3. Push to Hugging Face
+          # 5. Push to Hugging Face
           git push -f https://adi-1607:$HF_TOKEN@huggingface.co/spaces/adi-1607/Clickbait-Clarifier master:main
