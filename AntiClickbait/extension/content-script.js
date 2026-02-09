@@ -91,14 +91,46 @@ async function checkClickbait() {
     const startUrl = location.href; // Capture URL at start
     console.log(`Checking clickbait for ${videoId}...`);
 
-    // 4. Call API
-    // http://127.0.0.1:5000/predict use this is backend is using localhost
-    // https://anticlickbait.onrender.com/predict use this if backend is using render
+    // 4. PRE-CHECK: Add "Checking..." status immediately
+    let badge = document.querySelector('.clickbait-badge');
+    if (!badge) {
+      badge = document.createElement("div");
+      badge.className = "clickbait-badge";
+      badge.style.background = "#4b5563"; // Gray while checking
+      badge.style.color = "#fff";
+      badge.style.padding = "6px 10px";
+      badge.style.marginTop = "12px";
+      badge.style.borderRadius = "4px";
+      badge.style.fontSize = "14px";
+      badge.style.fontFamily = "Roboto, Arial, sans-serif";
+      badge.style.fontWeight = "500";
+      badge.style.display = "inline-flex";
+      badge.style.alignItems = "center";
+      badge.style.gap = "6px";
+      badge.style.width = "fit-content";
+      badge.style.cursor = "wait";
+      badge.style.zIndex = "999";
+      badge.textContent = "⏱️ Checking for Clickbait...";
+      
+      const { element: ytTitleNode } = titleResult;
+      const titleContainer = ytTitleNode.closest('ytd-watch-metadata') || ytTitleNode.parentNode;
+      const h1Element = titleContainer.querySelector('h1') || ytTitleNode;
+      h1Element.insertAdjacentElement('afterend', badge);
+    }
+
+    // 5. Call API
     const res = await fetch("https://anticlickbait.onrender.com/predict", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ video_id: videoId })
+      body: JSON.stringify({ video_id: videoId }),
+      signal: AbortSignal.timeout(15000) // 15s timeout
     });
+
+    if (res.status === 503 || res.status === 502) {
+      badge.textContent = "⏳ Server Waking Up (Wait 30s)...";
+      console.log("Server is booting up...");
+      throw new Error("Server Booting");
+    }
 
     // RACE CONDITION FIX: If URL changed while fetching, abort.
     if (location.href !== startUrl) {
@@ -110,27 +142,10 @@ async function checkClickbait() {
     const data = await res.json();
     if (data.error) throw new Error(data.error);
 
-    // 5. Create Badge
-    const badge = document.createElement("div");
-    badge.className = "clickbait-badge";
-
-    // Styling based on prediction
-    // Styling based on prediction
+    // 6. Update Badge with Results
     const isMisleading = data.prediction === "Misleading";
     badge.style.background = isMisleading ? "#dc2626" : "#16a34a"; // Red or Green
-    badge.style.color = "#fff";
-    badge.style.padding = "6px 10px";
-    badge.style.marginTop = "12px"; // Gap between title and badge
-    badge.style.borderRadius = "4px";
-    badge.style.fontSize = "14px";
-    badge.style.fontFamily = "Roboto, Arial, sans-serif";
-    badge.style.fontWeight = "500";
-    badge.style.display = "inline-flex"; // Keeps icon and text together
-    badge.style.alignItems = "center";
-    badge.style.gap = "6px";
-    badge.style.width = "fit-content"; // Don't stretch
     badge.style.cursor = "default";
-    badge.style.zIndex = "999";
 
     // Text Content
     const icon = "⚠️";
@@ -151,31 +166,17 @@ async function checkClickbait() {
       badge.title = `Reason: ${data.reason}`;
     }
 
-    // 6. Append Badge
-    const { element: ytTitleNode } = titleResult;
-    // We want to insert it AFTER the h1 element/title container
-    // content-style.css can also help here, but inline styles ensure immediate fix
-    const titleContainer = ytTitleNode.closest('ytd-watch-metadata') || ytTitleNode.parentNode;
-
-    // Check if we should insert after the H1 specifically
-    const h1Element = titleContainer.querySelector('h1') || ytTitleNode;
-
-    // FINAL CHECK: Ensure no badge was added while we were waiting/processing
-    if (titleContainer.querySelector('.clickbait-badge') || document.querySelector(`.clickbait-badge[data-video-id="${videoId}"]`)) {
-      console.log("Badge added by another process, skipping append.");
-      return true;
-    }
     badge.setAttribute('data-video-id', videoId); // Mark badge with ID
-
-    // Insert AFTER the title (h1)
-    h1Element.insertAdjacentElement('afterend', badge);
-
     badgeAdded = true;
-    console.log("Badge added!");
+    console.log("Badge updated with result!");
     inFlightVideoId = null; // Release lock
     return true;
 
   } catch (err) {
+    if (err.name === 'TimeoutError' || err.message === 'Server Booting') {
+        const badge = document.querySelector('.clickbait-badge');
+        if (badge) badge.textContent = "⌛ Still waking up... please wait.";
+    }
     console.error("API Error:", err);
     inFlightVideoId = null; // Release lock
     return false;

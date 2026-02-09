@@ -27,5 +27,4 @@ jobs:
           git commit -m "Deploying backend from subfolder"
           
           # 3. Push to Hugging Face
-          # REPLACE [USERNAME] and [SPACE_NAME] with your actual details
-          git push -f https://YOUR_USERNAME:$HF_TOKEN@huggingface.co/spaces/YOUR_USERNAME/YOUR_SPACE_NAME master:main
+          git push -f https://adi-1607:$HF_TOKEN@huggingface.co/spaces/adi-1607/Clickbait-Clarifier master:main
