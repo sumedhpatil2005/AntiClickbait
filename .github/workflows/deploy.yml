@@ -1,0 +1,31 @@
+name: Sync to Hugging Face space
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  sync-to-hub:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          lfs: true
+      - name: Push to hub
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          # 1. Navigate to the folder containing your backend code and Dockerfile
+          cd AntiClickbait/backend
+          
+          # 2. Setup a fresh git environment to push just this folder
+          git init
+          git config user.name "Hugging Face Deploy"
+          git config user.email "deploy@huggingface.co"
+          git add .
+          git commit -m "Deploying backend from subfolder"
+          
+          # 3. Push to Hugging Face
+          # REPLACE [USERNAME] and [SPACE_NAME] with your actual details
+          git push -f https://YOUR_USERNAME:$HF_TOKEN@huggingface.co/spaces/YOUR_USERNAME/YOUR_SPACE_NAME master:main
