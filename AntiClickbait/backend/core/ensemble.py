@@ -43,9 +43,6 @@ def ensemble_predict(gbm_prob, llm_result):
             # If LLM is very sure it's safe (e.g. "Shemaroo channel"), force low probability
             final_prob = 0.1 
             reason = "LLM Overrode Statistical Model (Trusted Source)"
-        elif llm_conf > 0.6:
-            # If moderately sure, average it down (1.0 -> 0.5)
-            final_prob = (gbm_prob + 0.0) / 2
-            reason = "Combined AI Consensus (Leaning Safe)"
+        # REMOVED THE AVERAGING LOGIC - let the transcript verification handle this
             
     return final_prob, reason, raw_flags
