@@ -119,13 +119,19 @@ def predict():
 
         # Override logic for verified content
         has_flags = len(llm_metadata.get("flags", [])) > 0
+        llm_verified_safe = transcript and not llm_metadata.get("is_clickbait", False) and llm_metadata.get("confidence", 0) > 0.7
         
+        # Case 1: LLM found specific timestamp where promise is fulfilled
         if verification_timestamp and not has_flags:
             final_prob = 0.1 # Trustworthy if promise found AND no red flags
             formatted_ts = clean_timestamp(verification_timestamp, duration_min=video_data.get('duration_min'))
             reason = f"Verified: {llm_metadata.get('reason')}"
             llm_metadata['verification_timestamp'] = formatted_ts
-            verification_timestamp = formatted_ts 
+            verification_timestamp = formatted_ts
+        # Case 2: LLM verified content is genuine (no timestamp needed for general verification)
+        elif llm_verified_safe and not has_flags:
+            final_prob = 0.1  # Trust LLM's transcript verification
+            reason = f"Transcript Verified Safe: {llm_metadata.get('reason', 'Content matches title claims')}"
         elif final_prob > 0.5 and llm_metadata.get("reason"):
              reason = llm_metadata.get("reason")
         
