@@ -19,3 +19,10 @@ backend/api_config.py
 .DS_Store
 Thumbs.db
 
+# Dev Assets (Local Only)
+dev_assets/
+*.pptx
+*.pdf
+*.docx
+scripts/
+temp/

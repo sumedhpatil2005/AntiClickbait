@@ -58,7 +58,7 @@ def analyze_semantic_flags(video_data, transcript=None):
     try:
         completion = client.chat.completions.create(
             messages=[{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": user_content}],
-            model="llama-3.3-70b",
+            model="llama3.1-8b",
             response_format={"type": "json_object"}
         )
         return json.loads(completion.choices[0].message.content)
