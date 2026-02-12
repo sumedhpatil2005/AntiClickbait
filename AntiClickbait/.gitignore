@@ -26,3 +26,5 @@ dev_assets/
 *.docx
 scripts/
 temp/
+extension/icons/
+screenshots/
